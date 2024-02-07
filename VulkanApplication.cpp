@@ -170,6 +170,8 @@ void VulkanApplication::mainLoop()
 		glfwPollEvents();
 		drawFrame();
 	}
+
+	vkDeviceWaitIdle(device);
 }
 
 void VulkanApplication::cleanup() const
