@@ -8,10 +8,12 @@ const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
 
 #if __DEBUG__
-constexpr bool enableValidationLayers = true;
+#define DEBUG_LAYERS true
 #else
-constexpr bool enableValidationLayers = false;
+#define DEBUG_LAYERS false
 #endif
+
+constexpr bool enableValidationLayers = DEBUG_LAYERS;
 
 const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};

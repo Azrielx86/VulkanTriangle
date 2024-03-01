@@ -41,11 +41,11 @@ class VulkanApplication
 	void createSurface();
 	void mainLoop();
 	void cleanup() const;
-	std::vector<const char *> getRequiredExtensions();
+	static std::vector<const char *> getRequiredExtensions();
 	bool isDeviceSuitable(const VkPhysicalDevice &device);
 	[[nodiscard]] QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice &device) const;
 	static bool checkValidationLayerSupport();
-	bool checkDeviceExtensionSupport(const VkPhysicalDevice &device);
+	static bool checkDeviceExtensionSupport(const VkPhysicalDevice &device);
 	SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice &device);
 	static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& avaiableFormats);
 	static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& avaiablePresentModes);
@@ -75,7 +75,7 @@ class VulkanApplication
 	VkQueue presentQueue{};
 	VkSwapchainKHR swapChain{};
 	std::vector<VkImage> swapChainImages;
-	std::vector<VkImageView> swapChainImageViews{};
+	std::vector<VkImageView> swapChainImageViews;
 	VkFormat swapChainImageFormat{};
 	VkExtent2D swapChainExtent{};
 	VkRenderPass renderPass;
