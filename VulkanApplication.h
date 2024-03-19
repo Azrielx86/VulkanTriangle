@@ -5,7 +5,6 @@
 
 #include <boost/format.hpp>
 #include <optional>
-#include <set>
 #include <string>
 
 struct QueueFamilyIndices

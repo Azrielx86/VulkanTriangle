@@ -3,6 +3,21 @@
 #include "Shader.h"
 
 #include <iostream>
+#include <set>
+#include <vulkan/vk_enum_string_helper.h>
+
+/**
+ * @param r Vulkan structure creation call
+ */
+#define ASSERT_VK_RESULT(r)                                                                                    \
+	{                                                                                                          \
+		VkResult result = (r);                                                                                 \
+		if (result != VK_SUCCESS)                                                                              \
+		{                                                                                                      \
+			auto msg = boost::format("Vulkan result failed (%s) at: %s") % string_VkResult(result) % __LINE__; \
+			throw std::runtime_error(msg.str());                                                               \
+		}                                                                                                      \
+	}
 
 const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
@@ -48,7 +63,7 @@ void VulkanApplication::initWindow()
 
 void VulkanApplication::frameBufferResizeCallback(GLFWwindow *window, int width, int height)
 {
-	const auto app = static_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
+	const auto app = static_cast<VulkanApplication *>(glfwGetWindowUserPointer(window));
 	app->framebufferResized = true;
 }
 
@@ -126,11 +141,7 @@ void VulkanApplication::createInstance()
 		// ReSharper disable once CppDFAUnreachableCode
 		createInfo.enabledLayerCount = 0;
 
-	if (auto result = vkCreateInstance(&createInfo, nullptr, &instance); result != VK_SUCCESS)
-	{
-		const auto error = boost::format("Failed to create vulkan instance: %d") % result;
-		throw std::runtime_error(error.str());
-	}
+	ASSERT_VK_RESULT(vkCreateInstance(&createInfo, nullptr, &instance));
 }
 
 void VulkanApplication::createLogicalDevice()
@@ -846,7 +857,7 @@ void VulkanApplication::recreateSwapChain()
 		glfwGetFramebufferSize(window, &width, &height);
 		glfwWaitEvents();
 	}
-	
+
 	vkDeviceWaitIdle(device);
 
 	cleanupSwapChain();
