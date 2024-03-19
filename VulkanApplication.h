@@ -34,6 +34,7 @@ class VulkanApplication
 
   private:
 	void initWindow();
+	static void frameBufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height);
 	void initVulkan();
 	void pickPhysisicalDevice();
 	void createInstance();
@@ -41,6 +42,7 @@ class VulkanApplication
 	void createSurface();
 	void mainLoop();
 	void cleanup() const;
+	void cleanupSwapChain() const;
 	static std::vector<const char *> getRequiredExtensions();
 	bool isDeviceSuitable(const VkPhysicalDevice &device);
 	[[nodiscard]] QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice &device) const;
@@ -57,10 +59,12 @@ class VulkanApplication
 	void createRenderPass();
 	void createFramebuffers();
 	void createCommandPool();
-	void createCommandBuffer();
+	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createSyncObjects();
 	void drawFrame();
+
+	void recreateSwapChain();
 	
 	int width;
 	int height;
@@ -83,10 +87,14 @@ class VulkanApplication
 	VkPipeline graphicsPipeline{};
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkCommandPool commandPool;
-	VkCommandBuffer commandBuffer;
-	VkSemaphore imageAvaiableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
-	VkFence inFlightFence;
+
+	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkSemaphore> imageAvaiableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	uint32_t currentFrame = 0;
+
+	bool framebufferResized = false;
 };
 
 #endif // VULKANAPPLICATION_H
