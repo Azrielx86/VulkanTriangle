@@ -3,11 +3,11 @@
 
 #include "Global.h"
 
+#include <array>
 #include <boost/format.hpp>
+#include <glm/glm.hpp>
 #include <optional>
 #include <string>
-#include <glm/glm.hpp>
-#include <array>
 
 struct Vertex
 {
@@ -40,10 +40,9 @@ struct Vertex
 };
 
 const std::vector<Vertex> vertices = {
-	{{0.0F, -0.5F}, {1.0F, 0.0F, 0.0F}},
-	{{0.5F, 0.5F}, {0.0F, 1.0F, 0.0F}},
-	{{-0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}}
-};
+    {{0.0F, -0.5F}, {1.0F, 0.0F, 0.0F}},
+    {{0.5F, 0.5F}, {0.0F, 1.0F, 0.0F}},
+    {{-0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}}};
 
 struct QueueFamilyIndices
 {
@@ -71,7 +70,7 @@ class VulkanApplication
 
   private:
 	void initWindow();
-	static void frameBufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height);
+	static void frameBufferResizeCallback(GLFWwindow *window, [[maybe_unused]] int width, [[maybe_unused]] int height);
 	void initVulkan();
 	void pickPhysisicalDevice();
 	void createInstance();
@@ -81,18 +80,18 @@ class VulkanApplication
 	void cleanup() const;
 	void cleanupSwapChain() const;
 	static std::vector<const char *> getRequiredExtensions();
-	bool isDeviceSuitable(const VkPhysicalDevice &device) const;
+	[[nodiscard]] bool isDeviceSuitable(const VkPhysicalDevice &device) const;
 	[[nodiscard]] QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice &device) const;
 	static bool checkValidationLayerSupport();
 	static bool checkDeviceExtensionSupport(const VkPhysicalDevice &device);
-	SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice &device) const;
-	static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& avaiableFormats);
-	static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& avaiablePresentModes);
-	[[nodiscard]] VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) const;
+	[[nodiscard]] SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice &device) const;
+	static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &avaiableFormats);
+	static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &avaiablePresentModes);
+	[[nodiscard]] VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) const;
 	void createSwapChain();
 	void createImageViews();
 	void createGraphicsPipeline();
-	[[nodiscard]] VkShaderModule createShaderModule(const std::vector<char>& code) const;
+	[[nodiscard]] VkShaderModule createShaderModule(const std::vector<char> &code) const;
 	void createRenderPass();
 	void createFramebuffers();
 	void createCommandPool();
@@ -103,7 +102,9 @@ class VulkanApplication
 	void recreateSwapChain();
 	void createVertexBuffer();
 	[[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
-	
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
 	int width;
 	int height;
 	std::string title;
