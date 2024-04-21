@@ -80,6 +80,7 @@ void VulkanApplication::initVulkan()
 	createFramebuffers();
 	createCommandPool();
 	createVertexBuffer();
+	createIndexBuffer();
 	createCommandBuffers();
 	createSyncObjects();
 }
@@ -148,10 +149,10 @@ void VulkanApplication::createInstance()
 
 void VulkanApplication::createLogicalDevice()
 {
-	indices = findQueueFamilies(physicalDevice);
+	qfIndices = findQueueFamilies(physicalDevice);
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	const std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+	const std::set<uint32_t> uniqueQueueFamilies = {qfIndices.graphicsFamily.value(), qfIndices.presentFamily.value()};
 
 	constexpr float queuePriority = 1.0f;
 	for (const auto queueFamily : uniqueQueueFamilies)
@@ -176,8 +177,8 @@ void VulkanApplication::createLogicalDevice()
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 	vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
-	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
-	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, qfIndices.presentFamily.value(), 0, &presentQueue);
+	vkGetDeviceQueue(device, qfIndices.graphicsFamily.value(), 0, &graphicsQueue);
 }
 
 void VulkanApplication::createSurface()
@@ -214,6 +215,9 @@ void VulkanApplication::cleanup() const
 
 	vkDestroyBuffer(device, vertexBuffer, nullptr);
 	vkFreeMemory(device, vertexBufferMemory, nullptr);
+
+	vkDestroyBuffer(device, indexBuffer, nullptr);
+	vkFreeMemory(device, indexBufferMemory, nullptr);
 
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -273,7 +277,16 @@ bool VulkanApplication::isDeviceSuitable(const VkPhysicalDevice &device) const
 	std::cout << boost::format("\t> Type: %s\n") % string_VkPhysicalDeviceType(deviceProperties.deviceType);
 	std::cout << boost::format("\t> API Version: %s\n") % deviceProperties.apiVersion;
 	std::cout << boost::format("\t> Max memory allocation: %d MB\n") % (deviceProperties.limits.maxMemoryAllocationCount / 1024 / 1024); // NOLINT(*-magic-numbers)
+#ifdef __DEBUG__
+	uint32_t queueFamilyCount = 0;
+	std::vector<VkQueueFamilyProperties> queueFamiliyProperties;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+	queueFamiliyProperties.resize(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiliyProperties.data());
 
+	for (auto &queueFamily : queueFamiliyProperties)
+		std::cout << boost::format("Queue found with flags: %s\n") % string_VkQueueFlags(queueFamily.queueFlags);
+#endif
 	const QueueFamilyIndices indices = findQueueFamilies(device);
 	const bool extensionsSupported = checkDeviceExtensionSupport(device);
 
@@ -432,8 +445,8 @@ void VulkanApplication::createSwapChain()
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-	if (indices.graphicsFamily != indices.presentFamily)
+	uint32_t queueFamilyIndices[] = {qfIndices.graphicsFamily.value(), qfIndices.presentFamily.value()};
+	if (qfIndices.graphicsFamily != qfIndices.presentFamily)
 	{
 		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = 2;
@@ -707,7 +720,7 @@ void VulkanApplication::createCommandPool()
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = indices.graphicsFamily.value();
+	poolInfo.queueFamilyIndex = qfIndices.graphicsFamily.value();
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create command pool");
@@ -771,7 +784,8 @@ void VulkanApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint3
 	VkBuffer vertexBuffers[] = {vertexBuffer};
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -973,4 +987,25 @@ void VulkanApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDev
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+void VulkanApplication::createIndexBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void *data;
+	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, indices.data(), (size_t) bufferSize);
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+
+	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+	
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }

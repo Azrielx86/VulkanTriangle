@@ -39,10 +39,20 @@ struct Vertex
 	}
 };
 
+// const std::vector<Vertex> vertices = {
+//     {{0.0F, -0.5F}, {1.0F, 0.0F, 0.0F}},
+//     {{0.5F, 0.5F}, {0.0F, 1.0F, 0.0F}},
+//     {{-0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}}};
+
 const std::vector<Vertex> vertices = {
-    {{0.0F, -0.5F}, {1.0F, 0.0F, 0.0F}},
-    {{0.5F, 0.5F}, {0.0F, 1.0F, 0.0F}},
-    {{-0.5F, 0.5F}, {0.0F, 0.0F, 1.0F}}};
+    // X		Y			R		G		B
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}};
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0};
 
 struct QueueFamilyIndices
 {
@@ -101,6 +111,7 @@ class VulkanApplication
 	void drawFrame();
 	void recreateSwapChain();
 	void createVertexBuffer();
+	void createIndexBuffer();
 	[[nodiscard]] uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -113,7 +124,7 @@ class VulkanApplication
 	VkPhysicalDevice physicalDevice;
 	VkDevice device{};
 	VkQueue graphicsQueue;
-	QueueFamilyIndices indices;
+	QueueFamilyIndices qfIndices;
 	VkSurfaceKHR surface{};
 	VkQueue presentQueue{};
 	VkSwapchainKHR swapChain{};
@@ -137,6 +148,8 @@ class VulkanApplication
 
 	VkBuffer vertexBuffer{};
 	VkDeviceMemory vertexBufferMemory{};
+	VkBuffer indexBuffer{};
+	VkDeviceMemory indexBufferMemory{};
 };
 
 #endif // VULKANAPPLICATION_H
