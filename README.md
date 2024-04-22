@@ -15,6 +15,7 @@ dev-util/vulkan-utility-libraries-1.3.268
 media-libs/vulkan-layers-1.3.268
 media-libs/vulkan-loader-1.3.268
 media-libs/glfw-3.3.8
+media-libs/shaderc
 ```
 
 Also you need Boost library for `boost::format`
